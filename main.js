@@ -1,5 +1,5 @@
 import kaboom from "kaboom";
-import { createAgent, createPipe, createText } from "./scenes/game";
+import { createAgent, createPipe } from "./scenes/game";
 import { random } from "./lib/random";
 
 kaboom({
@@ -13,7 +13,7 @@ loadSprite("background", "/sprites/background.png");
 loadSprite("bird", "/sprites/bird.png");
 loadSprite("pipe", "/sprites/pipe.png");
 
-const AGENT_COUNT = 300;
+const AGENT_COUNT = 500;
 
 let agents = [];
 let bestAgentOfAllTime;
@@ -29,25 +29,23 @@ const pickAgent = () => {
     return agents[i];
 };
 
+let generationValue = 0;
+
 scene("game", () => {
     add([sprite("background")]);
 
-    const generation = createText("Generation", vec2(16, 16));
+    const generation = add([
+        text("Generation: 0", { size: 14 }),
+        pos(16, 16),
+        z(30),
+    ]);
 
     // add initial agents into scene
     if (agents.length === 0) {
         for (let i = 0; i < AGENT_COUNT; i++) {
             agents.push(createAgent());
         }
-    }
-
-    onUpdate(() => {
-        // if there's still agents left, don't do genetic algorithm stuff
-        const existingAgents = get("agent");
-        if (existingAgents.length > 0) {
-            return;
-        }
-
+    } else {
         // get the best agent
         let bestAgent = agents[0];
         let bestScore = bestAgent.score;
@@ -72,17 +70,23 @@ scene("game", () => {
         }
 
         // create a new population of agents based on the existing agents
-        const nextAgents = [];
-        for (let i = 0; i < AGENT_COUNT; i++) {
+        const nextAgents = [createAgent(bestAgentOfAllTime.network.copy())];
+        for (let i = 0; i < AGENT_COUNT - 1; i++) {
             nextAgents.push(createAgent(pickAgent().network.copy().mutate()));
         }
 
-        nextAgents[0] = createAgent(bestAgentOfAllTime.network.copy());
         agents = nextAgents;
 
-        generation.updateValue(generation.value + 1);
+        // update generation value
+        generationValue++;
+        generation.text = `Generation: ${generationValue}`;
+    }
 
-        destroyAll("pipe");
+    onUpdate(() => {
+        const existingAgents = get("agent");
+        if (existingAgents.length === 0) {
+            go("game");
+        }
     });
 
     loop(2, () => {

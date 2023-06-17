@@ -2,10 +2,11 @@ import { createToyNetwork } from "../lib/createToyNetwork";
 import { killOnBoundary } from "../components/killOnBoundary";
 import { shakeKill } from "../components/shakeKill";
 import { vel, velRotate } from "../components/vel";
+import { constrain } from "../lib/random";
 
 const PIPE_HEIGHT = 320;
 const PIPE_GAP = 100;
-const SPEED = 140;
+const SPEED = 160;
 
 let currentPipes = [];
 
@@ -16,36 +17,43 @@ function brain(existingNetwork) {
         score: 0,
         network,
         update() {
-            if (currentPipes.length === 2) {
-                const inputs = [
-                    // how far away from pipes
-                    (currentPipes[0].pos.x - this.pos.x) / width(),
+            let [upperPipe, lowerPipe] = currentPipes;
+            const pipesExist = upperPipe && lowerPipe;
 
-                    // top of pipe opening
-                    (currentPipes[0].pos.y + PIPE_HEIGHT) / height(),
+            const inputs = [
+                // how far away from pipes
+                pipesExist ? (upperPipe.pos.x - this.pos.x) / width() : 1,
 
-                    // bottom of pipe opening
-                    currentPipes[1].pos.y / height(),
+                // top of pipe opening
+                pipesExist ? (upperPipe.pos.y + PIPE_HEIGHT) / height() : 0,
 
-                    // current y,
-                    this.pos.y / height(),
+                // bottom of pipe opening
+                pipesExist
+                    ? (upperPipe.pos.y + PIPE_HEIGHT + PIPE_GAP) / height()
+                    : 1,
 
-                    // current y velocity
-                    this.vel.y / 1000,
-                ];
+                // current y,
+                constrain(this.pos.y / height(), 0, 1),
 
-                // determine if we should jump or not
-                const output = network.feedForward(inputs);
-                if (output[0] > output[1]) {
-                    this.jump(350);
-                }
+                // current y velocity
+                constrain(this.vel.y / 1000, -1, 1),
+            ];
 
-                // manage score
+            // console.log(inputs);
+
+            // determine if we should jump or not
+            const output = network.feedForward(inputs);
+            if (output[0] > output[1]) {
+                this.jump(350);
+            }
+
+            // increment score if the pipes exist
+            if (pipesExist) {
                 this.score++;
-                if (
-                    this.pos.x >=
-                    currentPipes[0].pos.x + currentPipes[0].width
-                ) {
+
+                // increment score if agent passes
+                if (this.pos.x >= upperPipe.pos.x + upperPipe.width) {
+                    console.log("ok");
                     this.score += 1000;
                 }
             }
@@ -70,6 +78,10 @@ export function createAgent(existingNetwork) {
         "agent",
     ]);
 
+    // onKeyPress("space", () => {
+    //     agent.jump(350);
+    // });
+
     agent.onCollide("pipe", () => {
         agent.kill();
     });
@@ -81,6 +93,7 @@ export function createPipe() {
     const pipeGap = PIPE_GAP / 2;
     const pipeOffset = rand(-100, 100);
     const pipeCenter = height() / 2 - PIPE_HEIGHT + pipeOffset;
+    const pipeId = Math.random().toString().substring(2);
 
     const pipes = [
         // top pipe
@@ -90,6 +103,7 @@ export function createPipe() {
             move(LEFT, SPEED),
             area(),
             "pipe",
+            pipeId,
             { pipeOffset },
         ]),
 
@@ -100,6 +114,7 @@ export function createPipe() {
             move(LEFT, SPEED),
             area(),
             "pipe",
+            pipeId,
             { pipeOffset },
         ]),
     ];
@@ -113,19 +128,4 @@ export function createPipe() {
     });
 
     currentPipes = pipes;
-}
-
-export function createText(category, vec) {
-    return add([
-        text(`${category}: 0`, { size: 14 }),
-        pos(vec),
-        z(30),
-        {
-            value: 0,
-            updateValue(nextValue) {
-                this.value = nextValue;
-                this.text = `${category}: ${nextValue}`;
-            },
-        },
-    ]);
 }
