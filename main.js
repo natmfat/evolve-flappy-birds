@@ -1,7 +1,7 @@
 import "./style.css";
 
 import kaboom from "kaboom";
-import { pipe, player } from "./scenes/game";
+import { createAgent, createPipe } from "./scenes/game";
 import { random } from "./lib/random";
 
 kaboom({
@@ -36,12 +36,12 @@ scene("game", () => {
 
     if (agents.length === 0) {
         for (let i = 0; i < PLAYER_COUNT; i++) {
-            agents.push(player());
+            agents.push(createAgent());
         }
     }
 
     onUpdate(() => {
-        const players = get("player");
+        const players = get("agent");
         if (players.length === 0) {
             let bestAgent = agents[0];
             let bestScore = bestAgent.score;
@@ -63,7 +63,9 @@ scene("game", () => {
             // create a new population of agents based on the existing agents
             const nextAgents = [];
             for (let i = 0; i < PLAYER_COUNT; i++) {
-                nextAgents.push(player(pickAgent().network.copy().mutate()));
+                nextAgents.push(
+                    createAgent(pickAgent().network.copy().mutate())
+                );
             }
 
             // ensure that the strongest competitor always stays in the game
@@ -82,7 +84,7 @@ scene("game", () => {
     });
 
     loop(2, () => {
-        pipe();
+        createPipe();
     });
 });
 
