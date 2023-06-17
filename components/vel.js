@@ -24,12 +24,15 @@ export function vel() {
 // rotate in the direction of the velocity
 export function velRotate(min = -90, max = 90) {
     return {
+        targetAngle: 0,
         update() {
-            this.angle = constrain(
-                this.angle + Math.atan2(this.vel.y, this.vel.x),
+            this.targetAngle = constrain(
+                (Math.atan2(this.vel.y, this.vel.x) * 180) / Math.PI,
                 min,
                 max
             );
+
+            this.angle = lerp(this.angle, this.targetAngle, 0.1);
         },
     };
 }
