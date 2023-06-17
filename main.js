@@ -1,7 +1,5 @@
-import "./style.css";
-
 import kaboom from "kaboom";
-import { createAgent, createPipe } from "./scenes/game";
+import { createAgent, createPipe, createText } from "./scenes/game";
 import { random } from "./lib/random";
 
 kaboom({
@@ -33,6 +31,8 @@ const pickAgent = () => {
 
 scene("game", () => {
     add([sprite("background")]);
+
+    const generation = createText("Generation", vec2(16, 16));
 
     // add initial agents into scene
     if (agents.length === 0) {
@@ -79,6 +79,8 @@ scene("game", () => {
 
         nextAgents[0] = createAgent(bestAgentOfAllTime.network.copy());
         agents = nextAgents;
+
+        generation.updateValue(generation.value + 1);
 
         destroyAll("pipe");
     });

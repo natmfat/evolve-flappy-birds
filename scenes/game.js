@@ -4,8 +4,8 @@ import { shakeKill } from "../components/shakeKill";
 import { vel, velRotate } from "../components/vel";
 
 const PIPE_HEIGHT = 320;
-const PIPE_GAP = 120;
-const SPEED = 160;
+const PIPE_GAP = 100;
+const SPEED = 140;
 
 let currentPipes = [];
 
@@ -65,8 +65,8 @@ export function createAgent(existingNetwork) {
         anchor("center"),
         brain(existingNetwork),
         killOnBoundary(),
-        z(20),
         shakeKill(),
+        z(20),
         "agent",
     ]);
 
@@ -113,4 +113,19 @@ export function createPipe() {
     });
 
     currentPipes = pipes;
+}
+
+export function createText(category, vec) {
+    return add([
+        text(`${category}: 0`, { size: 14 }),
+        pos(vec),
+        z(30),
+        {
+            value: 0,
+            updateValue(nextValue) {
+                this.value = nextValue;
+                this.text = `${category}: ${nextValue}`;
+            },
+        },
+    ]);
 }
