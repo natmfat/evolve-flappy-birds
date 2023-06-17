@@ -41,66 +41,84 @@ function velRotate(min = -90, max = 90) {
     };
 }
 
-function keepOnscreen() {
+function dieOffScreen() {
     return {
         update() {
-            this.pos.x = constrain(this.pos.x, 0, width());
-            this.pos.y = constrain(this.pos.y, 0, height());
-        },
-    };
-}
-
-function brain() {
-    const network = createToyNetwork([
-        createLayer(4, 10),
-        createLayer(10, 10),
-        createLayer(10, 1),
-    ]);
-
-    return {
-        network,
-        update() {
-            const currentPipe = currentPipes[0];
-            const inputs = [
-                // how far away from pipes
-                currentPipe ? currentPipe.pos.x / width() : 1,
-
-                // pipe offset
-                currentPipe ? currentPipe.pipeOffset / height() : 0,
-
-                // current y,
-                this.pos.y / height(),
-
-                // current y velocity
-                this.vel.y / 1000,
-            ];
-
-            if (network.feedForward(inputs)[0] >= 0.5) {
-                this.jump(350);
+            if (
+                this.pos.x < 0 ||
+                this.pos.x > width() ||
+                this.pos.y < 0 ||
+                this.pos.y > height()
+            ) {
+                this.kill();
             }
         },
     };
 }
 
-export function player() {
+function brain(existingNetwork) {
+    const network = existingNetwork || createToyNetwork();
+
+    return {
+        score: 0,
+        network,
+        update() {
+            if (currentPipes.length === 2) {
+                const inputs = [
+                    // how far away from pipes
+                    (currentPipes[0].pos.x - this.pos.x) / width(),
+
+                    // top of pipe opening
+                    (currentPipes[0].pos.y + PIPE_HEIGHT) / height(),
+
+                    // bottom of pipe opening
+                    currentPipes[1].pos.y / height(),
+
+                    // current y,
+                    this.pos.y / height(),
+
+                    // current y velocity
+                    this.vel.y / 1000,
+                ];
+
+                // determine if we should jump or not
+                const output = network.feedForward(inputs);
+                if (output[0] > output[1]) {
+                    this.jump(350);
+                }
+
+                // manage score
+                this.score++;
+            }
+        },
+    };
+}
+
+export function player(existingNetwork) {
     const bird = add([
         sprite("bird"),
         pos(40, height() / 2 - 12),
         vel(),
         velRotate(-50, 80),
-        area(),
+        area({ collisionIgnore: ["player"] }),
         body(),
         rotate(0),
         anchor("center"),
-        brain(),
-        keepOnscreen(),
+        brain(existingNetwork),
+        dieOffScreen(),
         z(20),
         "player",
+        {
+            kill() {
+                addKaboom(bird.pos);
+                shake(10);
+                bird.destroy();
+            },
+        },
     ]);
 
-    bird.onCollide("pipe", (e) => {
-        addKaboom(bird.pos);
-        shake(10);
+    bird.onCollide("pipe", () => {
+        bird.kill();
     });
 
     return bird;
@@ -136,7 +154,7 @@ export function pipe() {
     pipes.forEach((pipe) => {
         pipe.onUpdate(() => {
             if (pipe.pos.x + pipe.width <= 0) {
-                pipe.remove();
+                pipe.destroy();
             }
         });
     });
