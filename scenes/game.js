@@ -4,8 +4,8 @@ import { shakeKill } from "../components/shakeKill";
 import { vel, velRotate } from "../components/vel";
 
 const PIPE_HEIGHT = 320;
-const PIPE_GAP = 100;
-const SPEED = 120;
+const PIPE_GAP = 120;
+const SPEED = 160;
 
 let currentPipes = [];
 
@@ -42,6 +42,12 @@ function brain(existingNetwork) {
 
                 // manage score
                 this.score++;
+                if (
+                    this.pos.x >=
+                    currentPipes[0].pos.x + currentPipes[0].width
+                ) {
+                    this.score += 1000;
+                }
             }
         },
     };
