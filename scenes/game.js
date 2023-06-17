@@ -1,35 +1,48 @@
-import { createToyNetwork } from "../lib/createToyNetwork";
 import { killOnBoundary } from "../components/killOnBoundary";
 import { shakeKill } from "../components/shakeKill";
 import { vel, velRotate } from "../components/vel";
 import { constrain } from "../lib/random";
+import { createToyNetwork } from "../lib/createToyNetwork";
 
 const PIPE_HEIGHT = 320;
 const PIPE_GAP = 100;
 const SPEED = 160;
 
-let currentPipes = [];
-
 function brain(existingNetwork) {
-    const network = existingNetwork || createToyNetwork();
+    const network = existingNetwork
+        ? existingNetwork.copy()
+        : createToyNetwork();
+
+    if (existingNetwork) {
+        network.mutate();
+    }
 
     return {
         score: 0,
+        fitness: 0,
         network,
         update() {
-            let [upperPipe, lowerPipe] = currentPipes;
-            const pipesExist = upperPipe && lowerPipe;
+            // get closest pipe
+            let closestPipe = null;
+            let closestPipeX = Infinity;
+            for (const pipe of get("pipe")) {
+                const pipeX = Math.abs(pipe.pos.x - this.pos.x);
+                if (pipeX < closestPipeX && pipeX > 0) {
+                    closestPipe = pipe;
+                    closestPipeX = pipeX;
+                }
+            }
 
             const inputs = [
                 // how far away from pipes
-                pipesExist ? (upperPipe.pos.x - this.pos.x) / width() : 1,
+                closestPipe ? closestPipeX / width() : 1,
 
                 // top of pipe opening
-                pipesExist ? (upperPipe.pos.y + PIPE_HEIGHT) / height() : 0,
+                closestPipe ? (closestPipe.pos.y + PIPE_HEIGHT) / height() : 0,
 
                 // bottom of pipe opening
-                pipesExist
-                    ? (upperPipe.pos.y + PIPE_HEIGHT + PIPE_GAP) / height()
+                closestPipe
+                    ? (closestPipe.pos.y + PIPE_HEIGHT + PIPE_GAP) / height()
                     : 1,
 
                 // current y,
@@ -39,24 +52,14 @@ function brain(existingNetwork) {
                 constrain(this.vel.y / 1000, -1, 1),
             ];
 
-            // console.log(inputs);
-
             // determine if we should jump or not
-            const output = network.feedForward(inputs);
+            const output = network.predict(inputs);
             if (output[0] > output[1]) {
                 this.jump(350);
             }
 
-            // increment score if the pipes exist
-            if (pipesExist) {
-                this.score++;
-
-                // increment score if agent passes
-                if (this.pos.x >= upperPipe.pos.x + upperPipe.width) {
-                    console.log("ok");
-                    this.score += 1000;
-                }
-            }
+            // score increases every frame you are alive
+            this.score++;
         },
     };
 }
@@ -126,6 +129,4 @@ export function createPipe() {
             }
         });
     });
-
-    currentPipes = pipes;
 }

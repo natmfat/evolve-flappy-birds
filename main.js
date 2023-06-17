@@ -13,15 +13,15 @@ loadSprite("background", "/sprites/background.png");
 loadSprite("bird", "/sprites/bird.png");
 loadSprite("pipe", "/sprites/pipe.png");
 
-const AGENT_COUNT = 500;
+const AGENT_COUNT = 200;
 
 let agents = [];
-let bestAgentOfAllTime;
+let bestAgentOfAllTime = null;
 const pickAgent = () => {
     let i = 0;
     let r = random();
     while (r > 0) {
-        r -= agents[i];
+        r -= agents[i].fitness;
         i++;
     }
     i--;
@@ -46,6 +46,11 @@ scene("game", () => {
             agents.push(createAgent());
         }
     } else {
+        // square all of the scores
+        for (const agent of agents) {
+            agent.score = agent.score ** 2;
+        }
+
         // get the best agent
         let bestAgent = agents[0];
         let bestScore = bestAgent.score;
@@ -66,13 +71,14 @@ scene("game", () => {
 
         // normalize all of the scores
         for (const agent of agents) {
-            agent.score = agent.score / totalScore;
+            agent.fitness = agent.score / totalScore;
         }
 
         // create a new population of agents based on the existing agents
-        const nextAgents = [createAgent(bestAgentOfAllTime.network.copy())];
+        const nextAgents = [];
+        nextAgents.push(createAgent(bestAgentOfAllTime.network));
         for (let i = 0; i < AGENT_COUNT - 1; i++) {
-            nextAgents.push(createAgent(pickAgent().network.copy().mutate()));
+            nextAgents.push(createAgent(pickAgent().network));
         }
 
         agents = nextAgents;
