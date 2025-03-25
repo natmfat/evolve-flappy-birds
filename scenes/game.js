@@ -1,17 +1,15 @@
 import { killOnBoundary } from "../components/killOnBoundary";
 import { shakeKill } from "../components/shakeKill";
-import { vel, velRotate } from "../components/vel";
-import { constrain } from "../lib/random";
+import { velRotate } from "../components/vel";
 import { createToyNetwork } from "../lib/createToyNetwork";
+import { constrain } from "../lib/random";
 
 const PIPE_HEIGHT = 320;
 const PIPE_GAP = 100;
-const SPEED = 160;
+const SPEED = 150;
 
 function brain(existingNetwork) {
-    const network = existingNetwork
-        ? existingNetwork.copy()
-        : createToyNetwork();
+    const network = existingNetwork ? existingNetwork.copy() : createToyNetwork();
 
     if (existingNetwork) {
         network.mutate();
@@ -26,7 +24,7 @@ function brain(existingNetwork) {
             let closestPipe = null;
             let closestPipeX = Infinity;
             for (const pipe of get("pipe")) {
-                const pipeX = Math.abs(pipe.pos.x - this.pos.x);
+                const pipeX = pipe.pos.x - this.pos.x;
                 if (pipeX < closestPipeX && pipeX > 0) {
                     closestPipe = pipe;
                     closestPipeX = pipeX;
@@ -54,8 +52,8 @@ function brain(existingNetwork) {
 
             // determine if we should jump or not
             const output = network.predict(inputs);
-            if (output[0] > output[1]) {
-                this.jump(350);
+            if (output[0] >= 0.5) {
+                this.jump(325);
             }
 
             // score increases every frame you are alive
@@ -67,8 +65,8 @@ function brain(existingNetwork) {
 export function createAgent(existingNetwork) {
     const agent = add([
         sprite("bird"),
+        opacity(0.5),
         pos(40, height() / 2 - 12),
-        vel(),
         velRotate(-50, 80),
         area({ collisionIgnore: ["agent"] }),
         body(),

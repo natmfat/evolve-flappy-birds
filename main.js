@@ -1,8 +1,9 @@
-import kaboom from "kaboom";
-import { createAgent, createPipe } from "./scenes/game";
-import { random } from "./lib/random";
+import kaplay from "kaplay";
 
-kaboom({
+import { random } from "./lib/random";
+import { createAgent, createPipe } from "./scenes/game";
+
+kaplay({
     width: 280,
     height: 512,
 });
@@ -30,6 +31,7 @@ const pickAgent = () => {
 };
 
 let generationValue = 0;
+let timeout;
 
 scene("game", () => {
     add([sprite("background")]);
@@ -69,6 +71,8 @@ scene("game", () => {
             bestAgentOfAllTime = bestAgent;
         }
 
+        bestAgent.score *= 4;
+
         // normalize all of the scores
         for (const agent of agents) {
             agent.fitness = agent.score / totalScore;
@@ -95,9 +99,12 @@ scene("game", () => {
         }
     });
 
-    loop(2, () => {
-        createPipe();
-    });
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        loop(2, () => {
+            createPipe();
+        });
+    }, 750);
 });
 
 go("game");

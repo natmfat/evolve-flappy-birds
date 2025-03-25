@@ -8,6 +8,7 @@ export function killOnBoundary() {
                 this.pos.y > height()
             ) {
                 this.kill();
+                this.score /= 2;
             }
         },
     };
