@@ -1,4 +1,6 @@
-![Evolve Flappy Birds: A bunch of flappy birds learn what it means to die](https://banner.natmfat.com/api/banner?title=evolve-flappy-birds&description=A%20bunch%20of%20flappy%20birds%20learn%20what%20it%20means%20to%20die&stack=javascript)
+# Evolve Flappy Birds
+
+A bunch of flappy birds learn what it means to die
 
 <img src="./preview.gif" height="300px"/>
 
